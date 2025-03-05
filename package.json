@@ -1,9 +1,13 @@
 {
+  "name": "infosec-frontend",
+  "version": "1.0.0",
+  "description": "QR 코드 검사 웹 프론트엔드",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
-    "express": "^4.21.2",
-    "fs": "^0.0.1-security",
-    "http-proxy-middleware": "^3.0.3",
-    "https": "^1.0.0",
-    "path": "^0.12.7"
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6"
   }
 }
