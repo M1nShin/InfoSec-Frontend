@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR 안전성 검사</title>
+  <script src="html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    p {
+      text-align: center;
+      color: #666;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #qrReader {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .result {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .result-safe {
+      color: green;
+    }
+
+    .result-warning {
+      color: orange;
+    }
+
+    .result-danger {
+      color: red;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR 안전성 검사</h1>
+    <p>QR 코드를 스캔하거나 이미지를 업로드하여 안전성을 확인하세요.</p>
+    
+    <div class="button-group">
+      <button id="startScan">QR 코드 스캔</button>
+      <input type="file" id="fileUpload" accept="image/*" />
+    </div>
+
+    <div id="qrReader"></div>
+
+    <div class="result" id="resultSection">
+      <!-- 결과 메시지가 여기에 표시됩니다 -->
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:5000/api"; //API 경로 지정
+
+    const startScanButton = document.getElementById("startScan");
+    const qrReader = document.getElementById("qrReader");
+    const resultSection = document.getElementById("resultSection");
+    let html5QrcodeScanner;
+
+    // QR 코드 스캔 시작
+    startScanButton.addEventListener("click", function () {
+      qrReader.style.display = "block";
+      resultSection.innerHTML = ""; // 결과 초기화
+
+      html5QrcodeScanner = new Html5Qrcode("qrReader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, // 후면 카메라 사용
+        {
+          fps: 10, // 초당 10 프레임
+          qrbox: 250, // QR 코드 스캔 박스 크기
+        },
+        (decodedText) => {
+          html5QrcodeScanner.stop();
+          qrReader.style.display = "none";
+          analyzeQRCode(decodedText);
+        }
+      ).catch(() => {
+        resultSection.innerHTML = '<p class="error">카메라 접근에 실패했습니다. 권한을 확인해주세요.</p>';
+      });
+    });
+
+    // QR 코드 분석 요청 (API 호출)
+    async function analyzeQRCode(qrData) {
+      resultSection.innerHTML = "<p>분석 중...</p>";
+      
+      fetch(`${API_URL}/analyze`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ url: qrData })
+      })
+      .then(response => response.json().then(data => ({
+        status: response.status,
+        body: data
+      })))  // 응답 상태 코드까지 포함하여 처리
+      .then(({ status, body }) => {
+        if (status !== 200) {
+            displayResult({ error: body.error || "알 수 없는 오류 발생" });
+        } else {
+            displayResult(body);
+        }
+      })
+      .catch(() => {
+        resultSection.innerHTML = '<p class="error">QR 코드 분석 중 오류가 발생했습니다.</p>';
+      });
+    }
+
+    // 파일 업로드 후 백엔드로 전송
+    document.getElementById("fileUpload").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      resultSection.innerHTML = "<p>이미지 분석 중...</p>";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch(`${API_URL}/upload`, { method: "POST", body: formData })
+      .then(response => response.json().then(data => ({
+        status: response.status,
+        body: data
+      })))
+      .then(({ status, body }) => {
+        if (status !== 200) {
+            displayResult({ error: body.error || "알 수 없는 오류 발생" });
+        } else {
+            displayResult(body);
+        }
+      })
+      .catch(() => {
+        resultSection.innerHTML = '<p class="error">이미지 분석 중 오류가 발생했습니다.</p>';
+      });
+    });
+
+    // 분석 결과 표시
+    function displayResult(data) {
+      resultSection.innerHTML = ""; // 초기화
+
+      if (data.error) {
+        resultSection.innerHTML = `<p class="error">${data.error}</p>`;
+        return;
+      }
+
+      if (data.level === "safe") {
+          resultSection.innerHTML = `<p class="result-safe">이 URL은 안전합니다! ✅</p>`;
+      }  else if (data.level === "caution") {
+          resultSection.innerHTML = `<p class="result-warning">주의: 이 URL은 안전하지 않을 수 있습니다. ⚠️</p>`;
+      } else {
+          resultSection.innerHTML = `<p class="result-danger">위험: 이 URL은 위험합니다! 🚨</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

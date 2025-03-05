@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "express": "^4.21.2",
+    "fs": "^0.0.1-security",
+    "http-proxy-middleware": "^3.0.3",
+    "https": "^1.0.0",
+    "path": "^0.12.7"
+  }
+}
