@@ -48,6 +48,10 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+setInterval(() => {
+  console.log("🚀 서버 유지 중...");
+}, 1000 * 60 * 10);
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ 서버 실행: http://0.0.0.0:${PORT}`);
 });
