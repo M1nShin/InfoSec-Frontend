@@ -99,7 +99,7 @@
   </div>
 
   <script>
-    const API_URL = "http://127.0.0.1:5000/api"; //API 경로 지정
+    const API_URL = window.location.origin + "/api"; //API 경로 지정
 
     const startScanButton = document.getElementById("startScan");
     const qrReader = document.getElementById("qrReader");

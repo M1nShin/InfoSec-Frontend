@@ -6,7 +6,7 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 8443;
-const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:5000";
+const BACKEND_URL = process.env.BACKEND_URL || "https://web-production-b3edf.up.railway.app";
 
 // SSL 인증서 로드
 const CERT_PATH = path.join(__dirname, "cert.pem");
