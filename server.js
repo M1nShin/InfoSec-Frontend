@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 8443;
+const PORT = process.env.PORT || 8080;
 const BACKEND_URL = process.env.BACKEND_URL || "https://web-production-b3edf.up.railway.app";
 
 // SSL 인증서 로드
@@ -45,16 +45,9 @@ app.use(express.static(__dirname));
 
 // 루트 요청 처리
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// HTTPS 서버 실행
-https.createServer(
-  {
-    key: fs.readFileSync(KEY_PATH),
-    cert: fs.readFileSync(CERT_PATH)
-  },
-  app
-).listen(PORT, () => {
-  console.log(`✅ 서버 실행: https://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ 서버 실행: http://0.0.0.0:${PORT}`);
 });
